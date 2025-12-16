@@ -6,6 +6,9 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 
+// 导入数据库连接测试
+import { testConnection } from './database/connection.js';
+
 // 导入工具处理器
 import { registerQueryTools } from './tools/query.js';
 import { registerCalculateTools } from './tools/calculate.js';
@@ -95,22 +98,38 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 // 启动服务器
 async function main() {
-  console.error('启动 RPG MCP 服务器...');
+  console.error('🚀 [启动] 开始启动 RPG MCP 服务器...');
+  console.error('📋 [启动] Node 版本:', process.version);
+  console.error('📋 [启动] 工作目录:', process.cwd());
 
-  // 注册所有工具
-  registerAllTools();
+  try {
+    // 测试数据库连接
+    console.error('🔍 [启动] 测试数据库连接...');
+    const dbOk = await testConnection();
+    if (!dbOk) {
+      throw new Error('数据库连接失败,请检查配置和数据库状态');
+    }
 
-  console.error(`已注册 ${tools.size} 个工具`);
+    console.error('� [启动] 开始注册工具...');
+    registerAllTools();
+    console.error(`✓ [启动] 已注册 ${tools.size} 个工具`);
 
-  // 使用stdio传输
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
+    console.error('🔌 [启动] 创建 stdio 传输层...');
+    const transport = new StdioServerTransport();
+    
+    console.error('🤝 [启动] 连接 MCP 服务器...');
+    await server.connect(transport);
 
-  console.error('✓ RPG MCP 服务器已启动');
+    console.error('✅ [启动] RPG MCP 服务器已完全启动并就绪!');
+  } catch (error) {
+    console.error('❌ [启动错误]', error);
+    throw error;
+  }
 }
 
 main().catch((error) => {
-  console.error('服务器启动失败:', error);
+  console.error('💥 [致命错误] 服务器启动失败:', error);
+  console.error('💥 [致命错误] 堆栈:', error.stack);
   process.exit(1);
 });
 
