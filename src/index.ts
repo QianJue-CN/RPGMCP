@@ -14,6 +14,8 @@ import { registerWorldTools } from './tools/world.js';
 import { registerAdminTools } from './tools/admin.js';
 import { registerCraftingTools } from './tools/crafting.js';
 import { registerAchievementTools } from './tools/achievement.js';
+import { registerEntityTools } from './tools/entity.js';
+import { registerDatabaseTools } from './tools/database.js';
 
 // 创建MCP服务器
 const server = new Server(
@@ -40,6 +42,8 @@ function registerAllTools() {
   registerWorldTools(tools);
   registerCraftingTools(tools); // 制作系统工具
   registerAchievementTools(tools); // 成就系统工具
+  registerEntityTools(tools);   // 实体创建工具（角色、NPC、阵营）
+  registerDatabaseTools(tools); // 通用数据库CRUD工具
 }
 
 // 处理工具列表请求
