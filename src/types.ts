@@ -103,6 +103,11 @@ export interface NPC {
   name: string;
   location: string;
   is_alive: boolean;
+
+  // 生命值属性（现在是必需的）
+  max_hp: number;
+  current_hp: number;
+
   goals: any[];
   state: Record<string, any>;
   updated_at: Date;
@@ -114,8 +119,6 @@ export interface NPC {
   agility?: number;
   intelligence?: number;
   luck?: number;
-  max_hp?: number;
-  current_hp?: number;
 }
 
 export interface Faction {

@@ -1,6 +1,6 @@
 {
   "name": "@qianjue/rpg-mcp-server",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "A complete RPG game system MCP server implementation with PostgreSQL - enables LLM to run text-based RPG games with reliable data persistence, crafting system, and achievements",
   "type": "module",
   "main": "dist/index.js",

@@ -148,6 +148,18 @@ CREATE TABLE IF NOT EXISTS npcs (
     location VARCHAR(200) NOT NULL,
     is_alive BOOLEAN NOT NULL DEFAULT true,
 
+-- 生命值属性
+max_hp INTEGER NOT NULL DEFAULT 100,
+current_hp INTEGER NOT NULL DEFAULT 100,
+
+-- 战斗属性 (可选,用于战斗型NPC/敌人)
+level INTEGER,
+strength INTEGER,
+vitality INTEGER,
+agility INTEGER,
+intelligence INTEGER,
+luck INTEGER,
+
 -- NPC目标和状态（JSON格式）
 
 
