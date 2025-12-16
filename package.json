@@ -1,0 +1,37 @@
+{
+  "name": "rpg-mcp-server",
+  "version": "1.0.0",
+  "description": "RPG Game System MCP Server with PostgreSQL",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "rpg-mcp-server": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "db:migrate": "node dist/database/migrate.js",
+    "db:seed": "node dist/database/seed.js"
+  },
+  "keywords": [
+    "mcp",
+    "rpg",
+    "game",
+    "postgresql"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "dotenv": "^17.2.3",
+    "pg": "^8.13.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/pg": "^8.11.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
