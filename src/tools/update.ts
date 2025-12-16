@@ -1,7 +1,53 @@
 // 状态更新类工具
 import { query, queryOne, transaction } from '../database/connection.js';
-import type { Player } from '../types.js';
+import type { Player, NPC } from '../types.js';
 import { calculateExpForLevel, calculateMaxHP, calculateMaxMP } from '../utils/formulas.js';
+
+// 生命值实体接口（统一玩家和NPC的生命值属性）
+interface HealthEntity {
+  id: number | string;
+  name: string;
+  max_hp: number;
+  current_hp: number;
+  isPlayer: boolean;
+}
+
+// 辅助函数：根据名称查询生命值实体（玩家或NPC）
+async function getHealthEntity(name: string): Promise<HealthEntity | null> {
+  // 先尝试查询玩家
+  const player = await queryOne<Player>(
+    'SELECT id, name, max_hp, current_hp FROM players WHERE name = $1',
+    [name]
+  );
+
+  if (player) {
+    return {
+      id: player.id,
+      name: player.name,
+      max_hp: player.max_hp,
+      current_hp: player.current_hp,
+      isPlayer: true,
+    };
+  }
+
+  // 如果不是玩家，尝试查询NPC
+  const npc = await queryOne<NPC>(
+    'SELECT id, name, max_hp, current_hp FROM npcs WHERE name = $1',
+    [name]
+  );
+
+  if (npc && npc.max_hp !== undefined && npc.current_hp !== undefined) {
+    return {
+      id: npc.id,
+      name: npc.name,
+      max_hp: npc.max_hp,
+      current_hp: npc.current_hp,
+      isPlayer: false,
+    };
+  }
+
+  return null;
+}
 
 export function registerUpdateTools(tools: Map<string, any>) {
 
@@ -24,27 +70,26 @@ export function registerUpdateTools(tools: Map<string, any>) {
       required: ['target_name', 'damage'],
     },
     handler: async (args: { target_name: string; damage: number }) => {
-      const player = await queryOne<Player>(
-        'SELECT * FROM players WHERE name = $1',
-        [args.target_name]
-      );
+      const entity = await getHealthEntity(args.target_name);
 
-      if (!player) {
+      if (!entity) {
         throw new Error(`目标不存在: ${args.target_name}`);
       }
 
-      const newHP = Math.max(0, player.current_hp - args.damage);
+      const newHP = Math.max(0, entity.current_hp - args.damage);
       const isDead = newHP === 0;
 
+      const tableName = entity.isPlayer ? 'players' : 'npcs';
       await query(
-        'UPDATE players SET current_hp = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
-        [newHP, player.id]
+        `UPDATE ${tableName} SET current_hp = $1, updated_at = CURRENT_TIMESTAMP WHERE ${entity.isPlayer ? 'id' : 'id'} = $2`,
+        [newHP, entity.id]
       );
 
       return {
         target_name: args.target_name,
+        target_type: entity.isPlayer ? 'player' : 'npc',
         damage_dealt: args.damage,
-        hp_before: player.current_hp,
+        hp_before: entity.current_hp,
         hp_after: newHP,
         is_dead: isDead,
       };
@@ -70,28 +115,27 @@ export function registerUpdateTools(tools: Map<string, any>) {
       required: ['target_name', 'heal_amount'],
     },
     handler: async (args: { target_name: string; heal_amount: number }) => {
-      const player = await queryOne<Player>(
-        'SELECT * FROM players WHERE name = $1',
-        [args.target_name]
-      );
+      const entity = await getHealthEntity(args.target_name);
 
-      if (!player) {
+      if (!entity) {
         throw new Error(`目标不存在: ${args.target_name}`);
       }
 
-      const newHP = Math.min(player.max_hp, player.current_hp + args.heal_amount);
-      const actualHeal = newHP - player.current_hp;
+      const newHP = Math.min(entity.max_hp, entity.current_hp + args.heal_amount);
+      const actualHeal = newHP - entity.current_hp;
 
+      const tableName = entity.isPlayer ? 'players' : 'npcs';
       await query(
-        'UPDATE players SET current_hp = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
-        [newHP, player.id]
+        `UPDATE ${tableName} SET current_hp = $1, updated_at = CURRENT_TIMESTAMP WHERE ${entity.isPlayer ? 'id' : 'id'} = $2`,
+        [newHP, entity.id]
       );
 
       return {
         target_name: args.target_name,
+        target_type: entity.isPlayer ? 'player' : 'npc',
         heal_amount: args.heal_amount,
         actual_heal: actualHeal,
-        hp_before: player.current_hp,
+        hp_before: entity.current_hp,
         hp_after: newHP,
       };
     },
@@ -212,78 +256,84 @@ export function registerUpdateTools(tools: Map<string, any>) {
       quantity?: number;
       quality?: string;
     }) => {
-      const player = await queryOne<Player>(
-        'SELECT id FROM players WHERE name = $1',
-        [args.player_name]
-      );
-
-      if (!player) {
-        throw new Error(`玩家不存在: ${args.player_name}`);
-      }
-
-      const quantity = args.quantity || 1;
-      const quality = args.quality || 'normal';
-
-      if (args.operation === 'add') {
-        // 添加物品
-        const existing = await queryOne(
-          'SELECT * FROM inventory WHERE player_id = $1 AND item_id = $2 AND quality = $3',
-          [player.id, args.item_id, quality]
+      return await transaction(async (client) => {
+        const playerResult = await client.query(
+          'SELECT id FROM players WHERE name = $1',
+          [args.player_name]
         );
 
-        if (existing) {
-          await query(
-            'UPDATE inventory SET quantity = quantity + $1 WHERE id = $2',
-            [quantity, existing.id]
+        if (playerResult.rows.length === 0) {
+          throw new Error(`玩家不存在: ${args.player_name}`);
+        }
+
+        const player = playerResult.rows[0];
+        const quantity = args.quantity || 1;
+        const quality = args.quality || 'normal';
+
+        if (args.operation === 'add') {
+          // 添加物品
+          const existingResult = await client.query(
+            'SELECT * FROM inventory WHERE player_id = $1 AND item_id = $2 AND quality = $3',
+            [player.id, args.item_id, quality]
           );
+
+          if (existingResult.rows.length > 0) {
+            const existing = existingResult.rows[0];
+            await client.query(
+              'UPDATE inventory SET quantity = quantity + $1 WHERE id = $2',
+              [quantity, existing.id]
+            );
+          } else {
+            await client.query(
+              'INSERT INTO inventory (player_id, item_id, quantity, quality) VALUES ($1, $2, $3, $4)',
+              [player.id, args.item_id, quantity, quality]
+            );
+          }
+
+          return {
+            operation: 'add',
+            item_id: args.item_id,
+            quantity: quantity,
+            quality: quality,
+            success: true,
+          };
         } else {
-          await query(
-            'INSERT INTO inventory (player_id, item_id, quantity, quality) VALUES ($1, $2, $3, $4)',
-            [player.id, args.item_id, quantity, quality]
+          // 移除或使用物品
+          const existingResult = await client.query(
+            'SELECT * FROM inventory WHERE player_id = $1 AND item_id = $2 AND quality = $3',
+            [player.id, args.item_id, quality]
           );
+
+          if (existingResult.rows.length === 0) {
+            throw new Error(`物品不存在: ${args.item_id}`);
+          }
+
+          const existing = existingResult.rows[0];
+
+          if (existing.quantity < quantity) {
+            throw new Error(`物品数量不足: 需要${quantity}，拥有${existing.quantity}`);
+          }
+
+          const newQuantity = existing.quantity - quantity;
+          if (newQuantity === 0) {
+            await client.query('DELETE FROM inventory WHERE id = $1', [existing.id]);
+          } else {
+            await client.query(
+              'UPDATE inventory SET quantity = $1 WHERE id = $2',
+              [newQuantity, existing.id]
+            );
+          }
+
+          return {
+            operation: args.operation,
+            item_id: args.item_id,
+            quantity: quantity,
+            quality: quality,
+            remaining: newQuantity,
+            success: true,
+          };
         }
-
-        return {
-          operation: 'add',
-          item_id: args.item_id,
-          quantity: quantity,
-          quality: quality,
-          success: true,
-        };
-      } else {
-        // 移除或使用物品
-        const existing = await queryOne(
-          'SELECT * FROM inventory WHERE player_id = $1 AND item_id = $2 AND quality = $3',
-          [player.id, args.item_id, quality]
-        );
-
-        if (!existing) {
-          throw new Error(`物品不存在: ${args.item_id}`);
-        }
-
-        if (existing.quantity < quantity) {
-          throw new Error(`物品数量不足: 需要${quantity}，拥有${existing.quantity}`);
-        }
-
-        const newQuantity = existing.quantity - quantity;
-        if (newQuantity === 0) {
-          await query('DELETE FROM inventory WHERE id = $1', [existing.id]);
-        } else {
-          await query(
-            'UPDATE inventory SET quantity = $1 WHERE id = $2',
-            [newQuantity, existing.id]
-          );
-        }
-
-        return {
-          operation: args.operation,
-          item_id: args.item_id,
-          quantity: quantity,
-          quality: quality,
-          remaining: newQuantity,
-          success: true,
-        };
-      }
+      });
     },
   });
 
@@ -326,68 +376,78 @@ export function registerUpdateTools(tools: Map<string, any>) {
       item_id?: string;
       quality?: string;
     }) => {
-      const player = await queryOne<Player>(
-        'SELECT id FROM players WHERE name = $1',
-        [args.player_name]
-      );
-
-      if (!player) {
-        throw new Error(`玩家不存在: ${args.player_name}`);
-      }
-
-      if (args.operation === 'equip') {
-        if (!args.item_id) {
-          throw new Error('装备时必须指定item_id');
-        }
-
-        const quality = args.quality || 'normal';
-
-        // 检查是否已有装备
-        const existing = await queryOne(
-          'SELECT * FROM equipment WHERE player_id = $1 AND slot = $2',
-          [player.id, args.slot]
+      return await transaction(async (client) => {
+        const playerResult = await client.query(
+          'SELECT id FROM players WHERE name = $1',
+          [args.player_name]
         );
 
-        if (existing) {
-          // 卸下旧装备
-          await query('DELETE FROM equipment WHERE id = $1', [existing.id]);
+        if (playerResult.rows.length === 0) {
+          throw new Error(`玩家不存在: ${args.player_name}`);
         }
 
-        // 装备新物品
-        await query(
-          'INSERT INTO equipment (player_id, slot, item_id, quality) VALUES ($1, $2, $3, $4)',
-          [player.id, args.slot, args.item_id, quality]
-        );
+        const player = playerResult.rows[0];
 
-        return {
-          operation: 'equip',
-          slot: args.slot,
-          item_id: args.item_id,
-          quality: quality,
-          replaced: existing ? existing.item_id : null,
-          success: true,
-        };
-      } else {
-        // 卸下装备
-        const existing = await queryOne(
-          'SELECT * FROM equipment WHERE player_id = $1 AND slot = $2',
-          [player.id, args.slot]
-        );
+        if (args.operation === 'equip') {
+          if (!args.item_id) {
+            throw new Error('装备时必须指定item_id');
+          }
 
-        if (!existing) {
-          throw new Error(`该槽位没有装备: ${args.slot}`);
+          const quality = args.quality || 'normal';
+
+          // 检查是否已有装备
+          const existingResult = await client.query(
+            'SELECT * FROM equipment WHERE player_id = $1 AND slot = $2',
+            [player.id, args.slot]
+          );
+
+          let replacedItemId = null;
+
+          if (existingResult.rows.length > 0) {
+            const existing = existingResult.rows[0];
+            replacedItemId = existing.item_id;
+            // 卸下旧装备
+            await client.query('DELETE FROM equipment WHERE id = $1', [existing.id]);
+          }
+
+          // 装备新物品
+          await client.query(
+            'INSERT INTO equipment (player_id, slot, item_id, quality) VALUES ($1, $2, $3, $4)',
+            [player.id, args.slot, args.item_id, quality]
+          );
+
+          return {
+            operation: 'equip',
+            slot: args.slot,
+            item_id: args.item_id,
+            quality: quality,
+            replaced: replacedItemId,
+            success: true,
+          };
+        } else {
+          // 卸下装备
+          const existingResult = await client.query(
+            'SELECT * FROM equipment WHERE player_id = $1 AND slot = $2',
+            [player.id, args.slot]
+          );
+
+          if (existingResult.rows.length === 0) {
+            throw new Error(`该槽位没有装备: ${args.slot}`);
+          }
+
+          const existing = existingResult.rows[0];
+
+          await client.query('DELETE FROM equipment WHERE id = $1', [existing.id]);
+
+          return {
+            operation: 'unequip',
+            slot: args.slot,
+            item_id: existing.item_id,
+            quality: existing.quality,
+            success: true,
+          };
         }
-
-        await query('DELETE FROM equipment WHERE id = $1', [existing.id]);
-
-        return {
-          operation: 'unequip',
-          slot: args.slot,
-          item_id: existing.item_id,
-          quality: existing.quality,
-          success: true,
-        };
-      }
+      });
     },
   });
 
@@ -446,7 +506,10 @@ export function registerUpdateTools(tools: Map<string, any>) {
 
       if (!quest) throw new Error(`任务不存在或已完成: ${args.quest_id}`);
 
-      const objectives = quest.objectives_progress || {};
+      // 安全地处理objectives_progress JSON字段
+      const objectives = (typeof quest.objectives_progress === 'object' && quest.objectives_progress !== null)
+        ? quest.objectives_progress
+        : {};
       objectives[args.objective_id] = args.progress;
 
       await query(
@@ -485,10 +548,15 @@ export function registerUpdateTools(tools: Map<string, any>) {
         const player = playerResult.rows[0] as Player;
         if (!player) throw new Error(`玩家不存在: ${args.player_name}`);
 
-        await client.query(
-          'UPDATE player_quests SET status = $1, completed_at = CURRENT_TIMESTAMP WHERE player_id = $2 AND quest_id = $3',
-          ['completed', player.id, args.quest_id]
+        // 检查任务状态，防止重复完成
+        const questResult = await client.query(
+          'UPDATE player_quests SET status = $1, completed_at = CURRENT_TIMESTAMP WHERE player_id = $2 AND quest_id = $3 AND status = $4 RETURNING id',
+          ['completed', player.id, args.quest_id, 'active']
         );
+
+        if (questResult.rowCount === 0) {
+          throw new Error(`任务不存在、已完成或状态不正确: ${args.quest_id}`);
+        }
 
         const rewards = args.rewards || {};
 
@@ -537,7 +605,8 @@ export function registerUpdateTools(tools: Map<string, any>) {
         );
         return { faction_id: args.faction_id, old_value: existing.reputation_value, new_value: newValue, change: args.change };
       } else {
-        const newValue = Math.max(-1000, Math.min(1000, args.change));
+        // 新增声望时从0开始累加
+        const newValue = Math.max(-1000, Math.min(1000, 0 + args.change));
         await query(
           'INSERT INTO player_faction_standing (player_id, faction_id, reputation_value) VALUES ($1, $2, $3)',
           [player.id, args.faction_id, newValue]
@@ -581,6 +650,11 @@ export function registerUpdateTools(tools: Map<string, any>) {
       const loyaltyChange = args.loyalty_change || 0;
       const trustChange = args.trust_change || 0;
 
+      // 验证输入：忠诚度和信任度不允许负数变化（业务规则）
+      if (loyaltyChange < 0 || trustChange < 0) {
+        throw new Error('忠诚度和信任度不允许负数变化');
+      }
+
       if (existing) {
         const newAffection = Math.max(-100, Math.min(100, existing.affection + affectionChange));
         const newLoyalty = Math.max(0, Math.min(100, existing.loyalty + loyaltyChange));
@@ -597,9 +671,10 @@ export function registerUpdateTools(tools: Map<string, any>) {
 
         return { npc_id: args.npc_id, affection: newAffection, loyalty: newLoyalty, trust: newTrust };
       } else {
-        const newAffection = Math.max(-100, Math.min(100, affectionChange));
-        const newLoyalty = Math.max(0, Math.min(100, loyaltyChange));
-        const newTrust = Math.max(0, Math.min(100, trustChange));
+        // 新增关系时从0开始累加
+        const newAffection = Math.max(-100, Math.min(100, 0 + affectionChange));
+        const newLoyalty = Math.max(0, Math.min(100, 0 + loyaltyChange));
+        const newTrust = Math.max(0, Math.min(100, 0 + trustChange));
 
         await query(
           `INSERT INTO player_npc_relations

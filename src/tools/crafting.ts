@@ -272,8 +272,9 @@ export function registerCraftingTools(tools: Map<string, any>) {
         const isSuccess = roll <= successRate;
 
         // 消耗材料
+        // 成功时消耗100%材料，失败时消耗75%材料
         for (const material of materials) {
-          const lossRate = isSuccess ? 1.0 : (successRate >= 50 ? 0.5 : 0.8);
+          const lossRate = isSuccess ? 1.0 : 0.75;
           const lostQuantity = Math.ceil(material.quantity * lossRate);
 
           await client.query(

@@ -106,6 +106,16 @@ export interface NPC {
   goals: any[];
   state: Record<string, any>;
   updated_at: Date;
+
+  // 战斗属性 (可选,用于战斗型NPC/敌人)
+  level?: number;
+  strength?: number;
+  vitality?: number;
+  agility?: number;
+  intelligence?: number;
+  luck?: number;
+  max_hp?: number;
+  current_hp?: number;
 }
 
 export interface Faction {

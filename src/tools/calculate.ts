@@ -1,6 +1,55 @@
 // 数值计算类工具
 import { queryOne } from '../database/connection.js';
-import type { Player, DamageResult, ExpRewardResult, LootDrop, CraftResult } from '../types.js';
+import type { Player, NPC, DamageResult, ExpRewardResult, LootDrop, CraftResult } from '../types.js';
+
+// 战斗实体接口（统一玩家和NPC的战斗属性）
+interface CombatEntity {
+  name: string;
+  level: number;
+  strength: number;
+  vitality: number;
+  agility: number;
+  intelligence: number;
+  luck: number;
+  max_hp?: number;
+  current_hp?: number;
+}
+
+// 辅助函数：根据名称查询战斗实体（玩家或NPC）
+async function getCombatEntity(name: string): Promise<CombatEntity | null> {
+  // 先尝试查询玩家
+  const player = await queryOne<Player>(
+    'SELECT * FROM players WHERE name = $1',
+    [name]
+  );
+
+  if (player) {
+    return player as CombatEntity;
+  }
+
+  // 如果不是玩家，尝试查询NPC
+  const npc = await queryOne<NPC>(
+    'SELECT * FROM npcs WHERE name = $1',
+    [name]
+  );
+
+  if (npc && npc.level !== undefined && npc.strength !== undefined) {
+    // NPC有战斗属性才返回
+    return {
+      name: npc.name,
+      level: npc.level,
+      strength: npc.strength ?? 10,
+      vitality: npc.vitality ?? 10,
+      agility: npc.agility ?? 10,
+      intelligence: npc.intelligence ?? 10,
+      luck: npc.luck ?? 10,
+      max_hp: npc.max_hp,
+      current_hp: npc.current_hp,
+    };
+  }
+
+  return null;
+}
 import {
   calculateDamage,
   calculateExpReward,
@@ -56,10 +105,7 @@ export function registerCalculateTools(tools: Map<string, any>) {
       skill_damage?: number;
       elemental_multiplier?: number;
     }) => {
-      const attacker = await queryOne<Player>(
-        'SELECT * FROM players WHERE name = $1',
-        [args.attacker_name]
-      );
+      const attacker = await getCombatEntity(args.attacker_name);
 
       if (!attacker) {
         throw new Error(`攻击者不存在: ${args.attacker_name}`);
@@ -76,10 +122,7 @@ export function registerCalculateTools(tools: Map<string, any>) {
       // 计算防御力（如果有防御者）
       let defense = 0;
       if (args.defender_name) {
-        const defender = await queryOne<Player>(
-          'SELECT * FROM players WHERE name = $1',
-          [args.defender_name]
-        );
+        const defender = await getCombatEntity(args.defender_name);
 
         if (defender) {
           defense = args.attack_type === 'physical'
