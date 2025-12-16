@@ -14,6 +14,7 @@ vitality INTEGER NOT NULL DEFAULT 10,
 agility INTEGER NOT NULL DEFAULT 10,
 intelligence INTEGER NOT NULL DEFAULT 10,
 luck INTEGER NOT NULL DEFAULT 10,
+charisma INTEGER NOT NULL DEFAULT 10,
 
 -- 派生属性（计算得出，但缓存以提高性能）
 max_hp INTEGER NOT NULL DEFAULT 100,
@@ -42,6 +43,8 @@ CREATE TABLE IF NOT EXISTS inventory (
     quality VARCHAR(20) DEFAULT 'normal', -- normal, fine, excellent, masterwork, legendary
 
 -- 物品元数据（JSON格式存储特殊属性）
+
+
 metadata JSONB DEFAULT '{}',
     
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -58,6 +61,8 @@ CREATE TABLE IF NOT EXISTS equipment (
     quality VARCHAR(20) DEFAULT 'normal',
 
 -- 装备属性加成（JSON格式）
+
+
 bonuses JSONB DEFAULT '{}',
     
     equipped_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -73,6 +78,8 @@ CREATE TABLE IF NOT EXISTS player_quests (
     status VARCHAR(20) NOT NULL DEFAULT 'active', -- active, completed, failed, expired
 
 -- 任务目标进度（JSON格式）
+
+
 objectives_progress JSONB DEFAULT '{}',
     
     accepted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -111,9 +118,11 @@ CREATE TABLE IF NOT EXISTS player_npc_relations (
 -- 关系维度
 affection INTEGER NOT NULL DEFAULT 0, -- 好感度 -100 to 100
 loyalty INTEGER NOT NULL DEFAULT 0, -- 忠诚度 0 to 100
-trust INTEGER NOT NULL DEFAULT 0, -- 信任度 0 to 100
+trust INTEGER NOT NULL DEFAULT 0, -- 信任度 -100 to 100
 
 -- 互动记录
+
+
 last_interaction TIMESTAMP,
     interaction_count INTEGER NOT NULL DEFAULT 0,
     
@@ -140,6 +149,8 @@ CREATE TABLE IF NOT EXISTS npcs (
     is_alive BOOLEAN NOT NULL DEFAULT true,
 
 -- NPC目标和状态（JSON格式）
+
+
 goals JSONB DEFAULT '[]',
     state JSONB DEFAULT '{}',
     
@@ -155,6 +166,8 @@ CREATE TABLE IF NOT EXISTS factions (
 resources JSONB DEFAULT '{}',
 
 -- 领土控制（JSON格式）
+
+
 territory JSONB DEFAULT '[]',
     
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -167,6 +180,8 @@ CREATE TABLE IF NOT EXISTS world_state (
     weather VARCHAR(50) DEFAULT 'clear',
 
 -- 活跃事件（JSON格式）
+
+
 active_events JSONB DEFAULT '[]',
     
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -181,6 +196,8 @@ CREATE TABLE IF NOT EXISTS saves (
     save_name VARCHAR(200),
 
 -- 完整游戏状态快照（JSON格式）
+
+
 snapshot JSONB NOT NULL,
     
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -244,6 +261,8 @@ unlock_condition JSONB DEFAULT '{}',
 -- 示例: {"type": "proficiency", "value": 100}
 
 -- 配方描述
+
+
 description TEXT,
 
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -279,6 +298,8 @@ rewards JSONB DEFAULT '{}',
 is_hidden BOOLEAN NOT NULL DEFAULT false,
 
 -- 难度等级
+
+
 difficulty VARCHAR(20) DEFAULT 'normal', -- easy, normal, hard, legendary
 
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -298,6 +319,8 @@ progress JSONB DEFAULT '{}',
 is_completed BOOLEAN NOT NULL DEFAULT false,
 
 -- 完成时间
+
+
 completed_at TIMESTAMP,
 
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -316,6 +339,8 @@ achievement_points INTEGER NOT NULL DEFAULT 0,
 completed_count INTEGER NOT NULL DEFAULT 0,
 
 -- 统计数据（JSON格式，用于成就追踪）
+
+
 statistics JSONB DEFAULT '{}',
     -- 示例: {"enemies_killed": {"goblin": 45, "orc": 12}, "items_crafted": 150, "distance_traveled": 5000}
 
@@ -338,6 +363,8 @@ sources JSONB DEFAULT '[]',
 -- 示例: ["mining", "monster_drop:goblin", "vendor:blacksmith"]
 
 -- 堆叠上限
+
+
 stack_limit INTEGER NOT NULL DEFAULT 99,
 
     description TEXT,
@@ -363,4 +390,5 @@ CREATE INDEX idx_materials_type ON materials(type);
 -- 初始化世界状态
 INSERT INTO
     world_state (id, game_time, weather)
-VALUES (1, 0, 'clear') ON CONFLICT (id) DO NOTHING;
+VALUES (1, 0, 'clear')
+ON CONFLICT (id) DO NOTHING;

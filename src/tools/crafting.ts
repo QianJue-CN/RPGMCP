@@ -313,10 +313,10 @@ export function registerCraftingTools(tools: Map<string, any>) {
           const qualityRoll = Math.random() * 100 + proficiencyDiff / 10;
           let quality = 'normal';
           if (qualityRoll >= 99) quality = 'legendary';
-          else if (qualityRoll >= 91) quality = 'epic';
-          else if (qualityRoll >= 76) quality = 'rare';
+          else if (qualityRoll >= 91) quality = 'masterwork';
+          else if (qualityRoll >= 76) quality = 'excellent';
           else if (qualityRoll >= 51) quality = 'fine';
-          else if (qualityRoll < 20) quality = 'trash';
+          // 移除 trash,使用 normal 作为最低品质
 
           // 添加到背包
           const existing = await client.query(

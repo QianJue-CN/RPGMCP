@@ -147,13 +147,24 @@ async function resetDatabase(confirmation: string) {
   }
 
   try {
-    // 删除所有表
-    await query(`
-      DROP SCHEMA public CASCADE;
-      CREATE SCHEMA public;
-      GRANT ALL ON SCHEMA public TO postgres;
-      GRANT ALL ON SCHEMA public TO public;
+    // 删除所有表（不重建schema，避免权限问题）
+    const tables = await query(`
+      SELECT tablename FROM pg_tables WHERE schemaname = 'public'
     `);
+
+    // 删除所有表
+    for (const table of tables) {
+      await query(`DROP TABLE IF EXISTS ${table.tablename} CASCADE`);
+    }
+
+    // 删除所有序列
+    const sequences = await query(`
+      SELECT sequence_name FROM information_schema.sequences WHERE sequence_schema = 'public'
+    `);
+
+    for (const seq of sequences) {
+      await query(`DROP SEQUENCE IF EXISTS ${seq.sequence_name} CASCADE`);
+    }
 
     return {
       success: true,

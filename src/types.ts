@@ -5,27 +5,28 @@ export interface Player {
   name: string;
   level: number;
   experience: number;
-  
+
   // 基础属性
   strength: number;
   vitality: number;
   agility: number;
   intelligence: number;
   luck: number;
-  
+  charisma: number;
+
   // 派生属性
   max_hp: number;
   current_hp: number;
   max_mp: number;
   current_mp: number;
-  
+
   // 资源
   gold: number;
   stat_points: number;
-  
+
   // 位置
   location: string;
-  
+
   created_at: Date;
   updated_at: Date;
 }
