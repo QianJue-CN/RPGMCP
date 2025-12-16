@@ -1,0 +1,39 @@
+# Source files
+src/
+tsconfig.json
+
+# Test files
+test-*.js
+*.test.js
+*.spec.js
+
+# Development files
+.env
+.env.local
+.env.development
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Documentation (keep README files)
+TEST_REPORT.md
+
+# Config files
+claude_desktop_config.json
+

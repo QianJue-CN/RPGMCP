@@ -1,27 +1,55 @@
 {
-  "name": "rpg-mcp-server",
+  "name": "@qianjue/rpg-mcp-server",
   "version": "1.0.0",
-  "description": "RPG Game System MCP Server with PostgreSQL",
+  "description": "A complete RPG game system MCP server implementation with PostgreSQL - enables LLM to run text-based RPG games with reliable data persistence",
   "type": "module",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
     "rpg-mcp-server": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "database",
+    "prompts",
+    "README.md",
+    "README_ZH.md",
+    ".env.example"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "db:migrate": "node dist/database/migrate.js",
-    "db:seed": "node dist/database/seed.js"
+    "db:seed": "node dist/database/seed.js",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "mcp",
+    "model-context-protocol",
     "rpg",
     "game",
-    "postgresql"
+    "text-rpg",
+    "postgresql",
+    "llm",
+    "ai",
+    "claude",
+    "game-server",
+    "database"
   ],
-  "author": "",
+  "author": "QianJue",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/QianJue-CN/RPGMCP.git"
+  },
+  "bugs": {
+    "url": "https://github.com/QianJue-CN/RPGMCP/issues"
+  },
+  "homepage": "https://github.com/QianJue-CN/RPGMCP#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
     "dotenv": "^17.2.3",

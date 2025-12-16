@@ -1,6 +1,9 @@
 # RPG MCP 服务器
 
-[English](./README.md) | 中文文档
+[![npm version](https://badge.fury.io/js/@qianjue%2Frpg-mcp-server.svg)](https://www.npmjs.com/package/@qianjue/rpg-mcp-server)
+[![GitHub](https://img.shields.io/github/license/QianJue-CN/RPGMCP)](https://github.com/QianJue-CN/RPGMCP)
+
+[English](./README.md) | 中文文档 | [NPM 包](https://www.npmjs.com/package/@qianjue/rpg-mcp-server) | [GitHub](https://github.com/QianJue-CN/RPGMCP)
 
 基于 Node.js 和 PostgreSQL 的完整 RPG 游戏系统 MCP 服务器实现。
 
@@ -71,9 +74,26 @@
 - Node.js 18+
 - PostgreSQL 14+
 
-### 1. 安装依赖
+### 1. 安装
+
+**从 npm 安装（推荐）**：
 
 ```bash
+npm install -g @qianjue/rpg-mcp-server
+rpg-mcp-server
+```
+
+**或使用 npx 直接运行**：
+
+```bash
+npx @qianjue/rpg-mcp-server
+```
+
+**或从源码构建**：
+
+```bash
+git clone https://github.com/QianJue-CN/RPGMCP.git
+cd RPGMCP
 npm install
 ```
 
@@ -132,7 +152,7 @@ npm start
 **方式 B: 使用 npx**
 
 ```bash
-npx rpg-mcp-server
+npx @qianjue/rpg-mcp-server
 ```
 
 **方式 C: 直接运行**
@@ -172,7 +192,7 @@ node dist/index.js
   "mcpServers": {
     "rpg-game": {
       "command": "npx",
-      "args": ["rpg-mcp-server"],
+      "args": ["@qianjue/rpg-mcp-server"],
       "env": {
         "DB_HOST": "localhost",
         "DB_PORT": "5432",
