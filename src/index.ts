@@ -12,6 +12,8 @@ import { registerCalculateTools } from './tools/calculate.js';
 import { registerUpdateTools } from './tools/update.js';
 import { registerWorldTools } from './tools/world.js';
 import { registerAdminTools } from './tools/admin.js';
+import { registerCraftingTools } from './tools/crafting.js';
+import { registerAchievementTools } from './tools/achievement.js';
 
 // 创建MCP服务器
 const server = new Server(
@@ -36,6 +38,8 @@ function registerAllTools() {
   registerCalculateTools(tools);
   registerUpdateTools(tools);
   registerWorldTools(tools);
+  registerCraftingTools(tools); // 制作系统工具
+  registerAchievementTools(tools); // 成就系统工具
 }
 
 // 处理工具列表请求
