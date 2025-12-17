@@ -11,6 +11,7 @@ export interface Player {
   vitality: number;
   agility: number;
   intelligence: number;
+  wisdom: number;
   luck: number;
   charisma: number;
 

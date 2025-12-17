@@ -136,7 +136,44 @@ export function registerQueryTools(tools: Map<string, any>) {
     },
   });
 
-  // 4. 获取阵营声望
+  // 4. 获取已完成的任务
+  tools.set('get_completed_quests', {
+    name: 'get_completed_quests',
+    description: '获取玩家已完成的任务',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        player_name: {
+          type: 'string',
+          description: '玩家名称',
+        },
+      },
+      required: ['player_name'],
+    },
+    handler: async (args: { player_name: string }) => {
+      const player = await queryOne<Player>(
+        'SELECT id FROM players WHERE name = $1',
+        [args.player_name]
+      );
+
+      if (!player) {
+        throw new Error(`玩家不存在: ${args.player_name}`);
+      }
+
+      const quests = await query<PlayerQuest>(
+        'SELECT * FROM player_quests WHERE player_id = $1 AND status = $2 ORDER BY completed_at DESC',
+        [player.id, 'completed']
+      );
+
+      return {
+        player_name: args.player_name,
+        completed_quest_count: quests.length,
+        quests: quests,
+      };
+    },
+  });
+
+  // 5. 获取阵营声望
   tools.set('get_faction_standings', {
     name: 'get_faction_standings',
     description: '获取玩家在各阵营的声望',
@@ -421,6 +458,6 @@ export function registerQueryTools(tools: Map<string, any>) {
     },
   });
 
-  console.error('✓ 已注册 10 个查询工具');
+  console.error('✓ 已注册 11 个查询工具');
 }
 
