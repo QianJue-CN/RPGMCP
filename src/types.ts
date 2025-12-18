@@ -40,6 +40,8 @@ export interface InventoryItem {
   quantity: number;
   quality: string;
   metadata: Record<string, any>;
+  description?: string;      // 物品描述
+  notes?: string;            // 玩家备注
   created_at: Date;
 }
 
@@ -50,6 +52,8 @@ export interface Equipment {
   item_id: string;
   quality: string;
   bonuses: Record<string, any>;
+  description?: string;      // 装备描述
+  notes?: string;            // 玩家备注
   equipped_at: Date;
 }
 
@@ -59,6 +63,8 @@ export interface PlayerQuest {
   quest_id: string;
   status: string;
   objectives_progress: Record<string, any>;
+  description?: string;      // 任务描述
+  notes?: string;            // 玩家备注
   accepted_at: Date;
   completed_at?: Date;
   expires_at?: Date;
@@ -70,6 +76,9 @@ export interface PlayerSkill {
   skill_id: string;
   level: number;
   experience: number;
+  description?: string;      // 技能描述
+  effect_description?: string; // 技能效果说明
+  notes?: string;            // 玩家备注
 }
 
 export interface FactionStanding {
@@ -77,6 +86,8 @@ export interface FactionStanding {
   player_id: number;
   faction_id: string;
   reputation_value: number;
+  reputation_tier?: string;  // 声望等级: hostile, unfriendly, neutral, friendly, honored, revered, exalted
+  notes?: string;            // 玩家备注
   updated_at: Date;
 }
 
@@ -87,6 +98,8 @@ export interface NPCRelation {
   affection: number;
   loyalty: number;
   trust: number;
+  relationship_status?: string; // 关系状态: stranger, acquaintance, friend, close_friend, rival, enemy
+  notes?: string;            // 玩家备注(记录重要互动)
   last_interaction?: Date;
   interaction_count: number;
   updated_at: Date;
@@ -97,6 +110,8 @@ export interface Companion {
   player_id: number;
   npc_id: string;
   is_active: boolean;
+  nickname?: string;         // 玩家给同伴起的昵称
+  notes?: string;            // 玩家备注
   recruited_at: Date;
 }
 
@@ -109,6 +124,11 @@ export interface NPC {
   // 生命值属性（现在是必需的）
   max_hp: number;
   current_hp: number;
+
+  // NPC信息
+  description?: string;      // NPC描述
+  role?: string;             // NPC角色: merchant, quest_giver, enemy, ally, neutral
+  personality?: string;      // 性格特征
 
   goals: any[];
   state: Record<string, any>;
@@ -126,6 +146,9 @@ export interface NPC {
 export interface Faction {
   id: string;
   name: string;
+  description?: string;      // 阵营描述
+  ideology?: string;         // 阵营理念/意识形态
+  leader?: string;           // 阵营领袖
   resources: Record<string, any>;
   territory: string[];
   updated_at: Date;

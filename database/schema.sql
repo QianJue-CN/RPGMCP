@@ -45,9 +45,11 @@ CREATE TABLE IF NOT EXISTS inventory (
     quality VARCHAR(20) DEFAULT 'normal', -- normal, fine, excellent, masterwork, legendary
 
 -- 物品元数据（JSON格式存储特殊属性）
-
-
 metadata JSONB DEFAULT '{}',
+
+-- 描述和备注
+description TEXT, -- 物品描述
+    notes TEXT, -- 玩家备注
     
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
@@ -63,9 +65,11 @@ CREATE TABLE IF NOT EXISTS equipment (
     quality VARCHAR(20) DEFAULT 'normal',
 
 -- 装备属性加成（JSON格式）
-
-
 bonuses JSONB DEFAULT '{}',
+
+-- 描述和备注
+description TEXT, -- 装备描述
+    notes TEXT, -- 玩家备注
     
     equipped_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
@@ -80,9 +84,11 @@ CREATE TABLE IF NOT EXISTS player_quests (
     status VARCHAR(20) NOT NULL DEFAULT 'active', -- active, completed, failed, expired
 
 -- 任务目标进度（JSON格式）
-
-
 objectives_progress JSONB DEFAULT '{}',
+
+-- 描述和备注
+description TEXT, -- 任务描述
+    notes TEXT, -- 玩家备注
     
     accepted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP,
@@ -98,6 +104,12 @@ CREATE TABLE IF NOT EXISTS player_skills (
     skill_id VARCHAR(100) NOT NULL,
     level INTEGER NOT NULL DEFAULT 1,
     experience INTEGER NOT NULL DEFAULT 0,
+
+-- 描述和备注
+description TEXT, -- 技能描述
+    effect_description TEXT, -- 技能效果说明
+    notes TEXT, -- 玩家备注
+    
     UNIQUE (player_id, skill_id)
 );
 
@@ -107,6 +119,8 @@ CREATE TABLE IF NOT EXISTS player_faction_standing (
     player_id INTEGER NOT NULL REFERENCES players (id) ON DELETE CASCADE,
     faction_id VARCHAR(100) NOT NULL,
     reputation_value INTEGER NOT NULL DEFAULT 0, -- -1000 to 1000
+    reputation_tier VARCHAR(20), -- hostile, unfriendly, neutral, friendly, honored, revered, exalted
+    notes TEXT, -- 玩家备注
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (player_id, faction_id)
 );
@@ -122,9 +136,11 @@ affection INTEGER NOT NULL DEFAULT 0, -- 好感度 -100 to 100
 loyalty INTEGER NOT NULL DEFAULT 0, -- 忠诚度 0 to 100
 trust INTEGER NOT NULL DEFAULT 0, -- 信任度 -100 to 100
 
+-- 关系状态
+relationship_status VARCHAR(30), -- stranger, acquaintance, friend, close_friend, rival, enemy
+notes TEXT, -- 玩家备注(记录重要互动)
+
 -- 互动记录
-
-
 last_interaction TIMESTAMP,
     interaction_count INTEGER NOT NULL DEFAULT 0,
     
@@ -139,6 +155,8 @@ CREATE TABLE IF NOT EXISTS player_companions (
     player_id INTEGER NOT NULL REFERENCES players (id) ON DELETE CASCADE,
     npc_id VARCHAR(100) NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT true, -- 是否在当前队伍中
+    nickname VARCHAR(100), -- 玩家给同伴起的昵称
+    notes TEXT, -- 玩家备注
     recruited_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (player_id, npc_id)
 );
@@ -154,6 +172,11 @@ CREATE TABLE IF NOT EXISTS npcs (
 max_hp INTEGER NOT NULL DEFAULT 100,
 current_hp INTEGER NOT NULL DEFAULT 100,
 
+-- NPC信息
+description TEXT, -- NPC描述
+role VARCHAR(30), -- merchant, quest_giver, enemy, ally, neutral
+personality TEXT, -- 性格特征
+
 -- 战斗属性 (可选,用于战斗型NPC/敌人)
 level INTEGER,
 strength INTEGER,
@@ -163,8 +186,6 @@ intelligence INTEGER,
 luck INTEGER,
 
 -- NPC目标和状态（JSON格式）
-
-
 goals JSONB DEFAULT '[]',
     state JSONB DEFAULT '{}',
     
@@ -176,12 +197,15 @@ CREATE TABLE IF NOT EXISTS factions (
     id VARCHAR(100) PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
 
+-- 阵营信息
+description TEXT, -- 阵营描述
+ideology TEXT, -- 阵营理念/意识形态
+leader VARCHAR(100), -- 阵营领袖
+
 -- 阵营资源
 resources JSONB DEFAULT '{}',
 
 -- 领土控制（JSON格式）
-
-
 territory JSONB DEFAULT '[]',
     
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
