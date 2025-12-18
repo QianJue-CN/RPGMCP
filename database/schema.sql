@@ -93,6 +93,7 @@ description TEXT, -- 任务描述
     accepted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP,
     expires_at TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     UNIQUE(player_id, quest_id)
 );
