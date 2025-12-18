@@ -177,12 +177,14 @@ export function registerUpdateTools(tools: Map<string, any>) {
         let statPointsGained = 0;
 
         // 检查升级
+        let skillPointsGained = 0;
         while (true) {
           const expNeeded = calculateExpForLevel(newLevel + 1);
           if (newExp >= expNeeded) {
             newLevel++;
             levelsGained++;
             statPointsGained += 5; // 每级获得5点属性点
+            skillPointsGained += 1; // 每级获得1点技能点
             newExp -= expNeeded;
           } else {
             break;
@@ -191,15 +193,16 @@ export function registerUpdateTools(tools: Map<string, any>) {
 
         // 更新玩家数据
         const newStatPoints = player.stat_points + statPointsGained;
+        const newSkillPoints = player.skill_points + skillPointsGained;
         const newMaxHP = calculateMaxHP(player.vitality, newLevel);
         const newMaxMP = calculateMaxMP(player.intelligence, newLevel);
 
         await client.query(
-          `UPDATE players 
-           SET experience = $1, level = $2, stat_points = $3, 
-               max_hp = $4, max_mp = $5, updated_at = CURRENT_TIMESTAMP
-           WHERE id = $6`,
-          [newExp, newLevel, newStatPoints, newMaxHP, newMaxMP, player.id]
+          `UPDATE players
+           SET experience = $1, level = $2, stat_points = $3, skill_points = $4,
+               max_hp = $5, max_mp = $6, updated_at = CURRENT_TIMESTAMP
+           WHERE id = $7`,
+          [newExp, newLevel, newStatPoints, newSkillPoints, newMaxHP, newMaxMP, player.id]
         );
 
         return {
@@ -209,7 +212,9 @@ export function registerUpdateTools(tools: Map<string, any>) {
           level_after: newLevel,
           levels_gained: levelsGained,
           stat_points_gained: statPointsGained,
+          skill_points_gained: skillPointsGained,
           total_stat_points: newStatPoints,
+          total_skill_points: newSkillPoints,
           did_level_up: levelsGained > 0,
         };
       });

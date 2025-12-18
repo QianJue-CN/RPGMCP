@@ -23,7 +23,8 @@ export interface Player {
 
   // 资源
   gold: number;
-  stat_points: number;
+  stat_points: number;      // 属性点
+  skill_points: number;     // 技能点
 
   // 位置
   location: string;

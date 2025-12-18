@@ -46,6 +46,11 @@ export function registerEntityTools(tools: Map<string, any>) {
           description: '魅力属性（默认10）',
           default: 10,
         },
+        wisdom: {
+          type: 'number',
+          description: '感知属性（默认10）',
+          default: 10,
+        },
         location: {
           type: 'string',
           description: '初始位置（默认starting_village）',
@@ -67,6 +72,7 @@ export function registerEntityTools(tools: Map<string, any>) {
       intelligence?: number;
       luck?: number;
       charisma?: number;
+      wisdom?: number;
       location?: string;
       gold?: number;
     }) => {
@@ -86,6 +92,7 @@ export function registerEntityTools(tools: Map<string, any>) {
       const int = args.intelligence || 10;
       const luk = args.luck || 10;
       const cha = args.charisma || 10;
+      const wis = args.wisdom || 10;
       const level = 1; // 初始等级为1
       const maxHP = calculateMaxHP(vit, level);
       const maxMP = calculateMaxMP(int, level);
@@ -93,15 +100,17 @@ export function registerEntityTools(tools: Map<string, any>) {
       const result = await query<Player>(
         `INSERT INTO players (
           name, level, experience,
-          strength, vitality, agility, intelligence, luck, charisma,
-          max_hp, current_hp, max_mp, current_mp, gold, location
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+          strength, vitality, agility, intelligence, wisdom, luck, charisma,
+          max_hp, current_hp, max_mp, current_mp, gold, stat_points, skill_points, location
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
         RETURNING *`,
         [
           args.name, 1, 0,
-          str, vit, agi, int, luk, cha,
+          str, vit, agi, int, wis, luk, cha,
           maxHP, maxHP, maxMP, maxMP,
           args.gold || 100,
+          0,  // stat_points初始为0
+          0,  // skill_points初始为0
           args.location || 'starting_village'
         ]
       );

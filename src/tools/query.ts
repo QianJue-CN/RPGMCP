@@ -325,8 +325,9 @@ export function registerQueryTools(tools: Map<string, any>) {
       // 转换游戏时间为可读格式
       const totalMinutes = worldState.game_time;
       const days = Math.floor(totalMinutes / 1440);
-      const hours = Math.floor((totalMinutes % 1440) / 60);
-      const minutes = totalMinutes % 60;
+      const remainingMinutes = totalMinutes % 1440;
+      const hours = Math.floor(remainingMinutes / 60);
+      const minutes = remainingMinutes % 60;
 
       return {
         game_time: {

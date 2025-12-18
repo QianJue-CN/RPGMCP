@@ -26,6 +26,7 @@ current_mp INTEGER NOT NULL DEFAULT 50,
 -- 资源
 gold INTEGER NOT NULL DEFAULT 0,
 stat_points INTEGER NOT NULL DEFAULT 0,
+skill_points INTEGER NOT NULL DEFAULT 0,
 
 -- 位置信息
 location VARCHAR(200) NOT NULL DEFAULT 'starting_village',
