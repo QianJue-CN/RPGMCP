@@ -185,7 +185,8 @@ export function registerWorldTools(tools: Map<string, any>) {
           throw new Error('世界状态未初始化');
         }
 
-        const oldGameTime = worldState.game_time;
+        // 修复: 确保 game_time 是数字类型（PostgreSQL BIGINT 可能被转换为字符串）
+        const oldGameTime = Number(worldState.game_time);
         const newGameTime = oldGameTime + args.duration_minutes;
 
         // 修复: 正确计算天气变化概率

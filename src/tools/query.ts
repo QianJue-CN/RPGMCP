@@ -323,7 +323,8 @@ export function registerQueryTools(tools: Map<string, any>) {
       }
 
       // 转换游戏时间为可读格式
-      const totalMinutes = worldState.game_time;
+      // 修复: 确保 game_time 是数字类型（PostgreSQL BIGINT 可能被转换为字符串）
+      const totalMinutes = Number(worldState.game_time);
       const days = Math.floor(totalMinutes / 1440);
       const remainingMinutes = totalMinutes % 1440;
       const hours = Math.floor(remainingMinutes / 60);
