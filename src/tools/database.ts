@@ -50,7 +50,45 @@ export function registerDatabaseTools(tools: Map<string, any>) {
   // 2. 通用插入工具
   tools.set('db_insert', {
     name: 'db_insert',
-    description: '向指定表插入数据',
+    description: `向指定表插入数据。各表字段要求如下：
+
+**players表** - 必需字段: name; 可选字段: level, experience, strength, vitality, agility, intelligence, wisdom, luck, charisma, max_hp, current_hp, max_mp, current_mp, gold, stat_points, skill_points, location
+
+**inventory表** - 必需字段: player_id, item_id; 可选字段: quantity, quality, metadata, description, notes
+
+**equipment表** - 必需字段: player_id, slot, item_id; 可选字段: quality, bonuses, description, notes
+
+**player_quests表** - 必需字段: player_id, quest_id; 可选字段: status, objectives_progress, description, notes, expires_at
+
+**player_skills表** - 必需字段: player_id, skill_id; 可选字段: level, experience, description, effect_description, notes
+
+**player_faction_standing表** - 必需字段: player_id, faction_id; 可选字段: reputation_value, reputation_tier, notes
+
+**player_npc_relations表** - 必需字段: player_id, npc_id; 可选字段: affection, loyalty, trust, relationship_status, notes, last_interaction, interaction_count
+
+**player_companions表** - 必需字段: player_id, npc_id; 可选字段: is_active, nickname, notes
+
+**npcs表** - 必需字段: id, name, location; 可选字段: is_alive, max_hp, current_hp, description, role, personality, level, strength, vitality, agility, intelligence, luck, goals, state
+
+**factions表** - 必需字段: id, name; 可选字段: description, ideology, leader, resources, territory
+
+**world_state表** - 必需字段: id; 可选字段: game_time, weather, active_events (注意: id必须为1)
+
+**saves表** - 必需字段: player_id, snapshot; 可选字段: save_name
+
+**player_crafting_proficiency表** - 必需字段: player_id, profession; 可选字段: level, experience
+
+**recipes表** - 必需字段: id, name, profession, materials, output_item_id; 可选字段: tier, proficiency_required, proficiency_gain, tools_required, workstation, craft_time_seconds, output_quantity, output_quality_base, unlock_condition, description
+
+**player_recipes表** - 必需字段: player_id, recipe_id
+
+**achievements表** - 必需字段: id, name, description, category, completion_criteria; 可选字段: rewards, is_hidden, difficulty
+
+**player_achievements表** - 必需字段: player_id, achievement_id; 可选字段: progress, is_completed, completed_at
+
+**player_achievement_stats表** - 必需字段: player_id; 可选字段: achievement_points, completed_count, statistics
+
+**materials表** - 必需字段: id, name, type; 可选字段: tier, properties, sources, stack_limit, description`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -60,7 +98,7 @@ export function registerDatabaseTools(tools: Map<string, any>) {
         },
         data: {
           type: 'object',
-          description: '要插入的数据（键值对）',
+          description: '要插入的数据（键值对）。请参考工具描述中各表的必需字段和可选字段要求',
         },
         returning: {
           type: 'string',

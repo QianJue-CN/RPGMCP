@@ -126,7 +126,7 @@ export function registerEntityTools(tools: Map<string, any>) {
   // 2. 创建NPC
   tools.set('create_npc', {
     name: 'create_npc',
-    description: '创建新的NPC',
+    description: '创建新的NPC。必需字段: id, name, location; 可选字段: is_alive, max_hp, current_hp, description, role, personality, level, strength, vitality, agility, intelligence, luck, goals, state',
     inputSchema: {
       type: 'object',
       properties: {
@@ -147,6 +147,52 @@ export function registerEntityTools(tools: Map<string, any>) {
           description: '是否存活（默认true）',
           default: true,
         },
+        max_hp: {
+          type: 'number',
+          description: '最大生命值（默认100）',
+          default: 100,
+        },
+        current_hp: {
+          type: 'number',
+          description: '当前生命值（默认100）',
+          default: 100,
+        },
+        description: {
+          type: 'string',
+          description: 'NPC描述',
+        },
+        role: {
+          type: 'string',
+          description: 'NPC角色: merchant, quest_giver, enemy, ally, neutral',
+        },
+        personality: {
+          type: 'string',
+          description: '性格特征',
+        },
+        level: {
+          type: 'number',
+          description: '等级（战斗型NPC）',
+        },
+        strength: {
+          type: 'number',
+          description: '力量属性（战斗型NPC）',
+        },
+        vitality: {
+          type: 'number',
+          description: '体质属性（战斗型NPC）',
+        },
+        agility: {
+          type: 'number',
+          description: '敏捷属性（战斗型NPC）',
+        },
+        intelligence: {
+          type: 'number',
+          description: '智力属性（战斗型NPC）',
+        },
+        luck: {
+          type: 'number',
+          description: '幸运属性（战斗型NPC）',
+        },
         goals: {
           type: 'array',
           description: 'NPC目标列表（JSON数组）',
@@ -165,6 +211,17 @@ export function registerEntityTools(tools: Map<string, any>) {
       name: string;
       location: string;
       is_alive?: boolean;
+      max_hp?: number;
+      current_hp?: number;
+      description?: string;
+      role?: string;
+      personality?: string;
+      level?: number;
+      strength?: number;
+      vitality?: number;
+      agility?: number;
+      intelligence?: number;
+      luck?: number;
       goals?: any[];
       state?: Record<string, any>;
     }) => {
@@ -178,19 +235,61 @@ export function registerEntityTools(tools: Map<string, any>) {
         throw new Error(`NPC已存在: ${args.id}`);
       }
 
-      const result = await query<NPC>(
-        `INSERT INTO npcs (id, name, location, is_alive, goals, state)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING *`,
-        [
-          args.id,
-          args.name,
-          args.location,
-          args.is_alive !== undefined ? args.is_alive : true,
-          JSON.stringify(args.goals || []),
-          JSON.stringify(args.state || {})
-        ]
-      );
+      // 构建动态SQL
+      const fields = ['id', 'name', 'location', 'is_alive', 'max_hp', 'current_hp', 'goals', 'state'];
+      const values: any[] = [
+        args.id,
+        args.name,
+        args.location,
+        args.is_alive !== undefined ? args.is_alive : true,
+        args.max_hp !== undefined ? args.max_hp : 100,
+        args.current_hp !== undefined ? args.current_hp : 100,
+        JSON.stringify(args.goals || []),
+        JSON.stringify(args.state || {})
+      ];
+
+      // 添加可选字段
+      if (args.description !== undefined) {
+        fields.push('description');
+        values.push(args.description);
+      }
+      if (args.role !== undefined) {
+        fields.push('role');
+        values.push(args.role);
+      }
+      if (args.personality !== undefined) {
+        fields.push('personality');
+        values.push(args.personality);
+      }
+      if (args.level !== undefined) {
+        fields.push('level');
+        values.push(args.level);
+      }
+      if (args.strength !== undefined) {
+        fields.push('strength');
+        values.push(args.strength);
+      }
+      if (args.vitality !== undefined) {
+        fields.push('vitality');
+        values.push(args.vitality);
+      }
+      if (args.agility !== undefined) {
+        fields.push('agility');
+        values.push(args.agility);
+      }
+      if (args.intelligence !== undefined) {
+        fields.push('intelligence');
+        values.push(args.intelligence);
+      }
+      if (args.luck !== undefined) {
+        fields.push('luck');
+        values.push(args.luck);
+      }
+
+      const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
+      const sql = `INSERT INTO npcs (${fields.join(', ')}) VALUES (${placeholders}) RETURNING *`;
+
+      const result = await query<NPC>(sql, values);
 
       return {
         success: true,
